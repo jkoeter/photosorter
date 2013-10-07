@@ -5,7 +5,7 @@ import os
 import wx
 import time
 import hashlib
-#import photosorter
+import photosorter
 import datetime
 import time
 import shutil
@@ -95,20 +95,22 @@ class PhotosorterMainFrame( photosorter.MainFrame ):
 		_fileCount = 0
 		_duplicates = 0
 		for _key in _fileHash :
-			_newDate = get_creation_date(_fileHash[_key][0])
-			_year = str(_newDate.year)
-			_yearDir = os.path.join(self.m_TargetDir.GetPath(), _year)
-			if os.path.isdir(_yearDir) :
-				pass
-			else :
-				os.mkdir(_yearDir)
-				
-			_newName = "%s-%02d-%02d%02d%02d.jpg"%(calendar.month_abbr[_newDate.month], _newDate.day, _newDate.hour, _newDate.minute, _newDate.second)
-			dlg.Update(value = _fileCount, newmsg = _newName)
-			shutil.copy2(_fileHash[_key][0], os.path.join(_yearDir, _newName))
-			if len(_fileHash[_key]) > 1 :
-				_duplicates += len(_fileHash[_key])
-			_fileCount = _fileCount + 1
+			# make sure the files with the same filehash are true duplicates
+			_datesProcessed = [] 
+			for _fileToProcess in _fileHash[_key] :
+				_newDate = get_creation_date(_fileToProcess)
+				if _newDate not in _datesProcessed :
+					_datesProcessed.append(_newDate)
+					_year = str(_newDate.year)
+					_yearDir = os.path.join(self.m_TargetDir.GetPath(), _year)
+					if not os.path.isdir(_yearDir) :
+						os.mkdir(_yearDir)
+					_newName = "%s-%02d-%02d%02d%02d.jpg"%(calendar.month_abbr[_newDate.month], _newDate.day, _newDate.hour, _newDate.minute, _newDate.second)
+					dlg.Update(value = _fileCount, newmsg = _newName)
+					shutil.copy2(_fileToProcess, os.path.join(_yearDir, _newName))
+					_fileCount = _fileCount + 1
+				else :
+					_duplicates = _duplicates + 1
 		
 		dlg.Destroy()
 		
