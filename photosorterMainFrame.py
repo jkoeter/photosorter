@@ -106,6 +106,7 @@ class PhotosorterMainFrame( photosorter.MainFrame ):
 					if not os.path.isdir(_yearDir) :
 						os.mkdir(_yearDir)
 					_newName = "%s-%02d-%02d%02d%02d.jpg"%(calendar.month_abbr[_newDate.month], _newDate.day, _newDate.hour, _newDate.minute, _newDate.second)
+					# TODO: check if the filename does not exist
 					dlg.Update(value = _fileCount, newmsg = _newName)
 					if self.m_chkMoveFiles :
 						shutil.move(_fileToProcess, os.path.join(_yearDir, _newName))
@@ -118,6 +119,19 @@ class PhotosorterMainFrame( photosorter.MainFrame ):
 					_duplicates = _duplicates + 1
 		
 		dlg.Destroy()
+
+		# Removing empty source folders
+		if self.m_chkDeleteEmptyDir :
+			dlg = wx.ProgressDialog("Progressing...", "Removing empty source folders", style = wx.PD_CAN_ABORT | wx.PD_ELAPSED_TIME)
+			dlg.Show()
+
+			for root, dirs, files in os.walk(self.m_SourceDir.GetPath(), topdown=False) :
+				for name in dirs :
+					dlg.Pulse()
+					if not os.listdir(os.path.join(root, name)) : #to check wither the dir is empty
+						os.rmdir(os.path.join(root, name))
+
+			dlg.Destroy()
 		
 		wx.MessageBox("Files: %d\nDuplicates: %d" % (len(_files), _duplicates), 'Info', wx.OK | wx.ICON_INFORMATION)
 	
