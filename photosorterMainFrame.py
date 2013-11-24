@@ -107,9 +107,14 @@ class PhotosorterMainFrame( photosorter.MainFrame ):
 						os.mkdir(_yearDir)
 					_newName = "%s-%02d-%02d%02d%02d.jpg"%(calendar.month_abbr[_newDate.month], _newDate.day, _newDate.hour, _newDate.minute, _newDate.second)
 					dlg.Update(value = _fileCount, newmsg = _newName)
-					shutil.copy2(_fileToProcess, os.path.join(_yearDir, _newName))
+					if self.m_chkMoveFiles :
+						shutil.move(_fileToProcess, os.path.join(_yearDir, _newName))
+					else :
+						shutil.copy2(_fileToProcess, os.path.join(_yearDir, _newName))
 					_fileCount = _fileCount + 1
 				else :
+					if self.m_chkDeleteDuplicates :
+						os.remove(_fileToProcess)
 					_duplicates = _duplicates + 1
 		
 		dlg.Destroy()
