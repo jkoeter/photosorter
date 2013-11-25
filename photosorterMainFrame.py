@@ -106,22 +106,41 @@ class PhotosorterMainFrame( photosorter.MainFrame ):
 					if not os.path.isdir(_yearDir) :
 						os.mkdir(_yearDir)
 					_newName = "%s-%02d-%02d%02d%02d.jpg"%(calendar.month_abbr[_newDate.month], _newDate.day, _newDate.hour, _newDate.minute, _newDate.second)
-					# TODO: check if the filename does not exist
+					
+					# Check if the filename does not exist and if it does create a new one
+					if os.path.exists(os.path.join(_yearDir, _newName)) :
+						if not CreateChecksum(os.path.join(_yearDir, _newName)) == _key :
+							_suffixCount = 0
+							while True :
+								_suffixCount = _suffixCount + 1
+								_newName = "%s-%02d-%02d%02d%02d-%02d.jpg"%(calendar.month_abbr[_newDate.month], _newDate.day, _newDate.hour, _newDate.minute, _newDate.second, _suffixCount)
+								if not os.path.exists(os.path.join(_yearDir, _newName)) :
+									break
+								# if new name exists and is a duplicate then skip it
+								elif CreateChecksum(os.path.join(_yearDir, _newName)) == _key :
+									break
+
 					dlg.Update(value = _fileCount, newmsg = _newName)
-					if self.m_chkMoveFiles :
-						shutil.move(_fileToProcess, os.path.join(_yearDir, _newName))
+
+					if not os.path.exists(os.path.join(_yearDir, _newName)) :
+						if self.m_chkMoveFiles.GetValue() :
+							shutil.move(_fileToProcess, os.path.join(_yearDir, _newName))
+						else :
+							shutil.copy2(_fileToProcess, os.path.join(_yearDir, _newName))
+						_fileCount = _fileCount + 1
 					else :
-						shutil.copy2(_fileToProcess, os.path.join(_yearDir, _newName))
-					_fileCount = _fileCount + 1
+						if self.m_chkDeleteDuplicates.GetValue() :
+							os.remove(_fileToProcess)
+						_duplicates = _duplicates + 1
 				else :
-					if self.m_chkDeleteDuplicates :
+					if self.m_chkDeleteDuplicates.GetValue() :
 						os.remove(_fileToProcess)
 					_duplicates = _duplicates + 1
 		
 		dlg.Destroy()
 
 		# Removing empty source folders
-		if self.m_chkDeleteEmptyDir :
+		if self.m_chkDeleteEmptyDir.GetValue() :
 			dlg = wx.ProgressDialog("Progressing...", "Removing empty source folders", style = wx.PD_CAN_ABORT | wx.PD_ELAPSED_TIME)
 			dlg.Show()
 
